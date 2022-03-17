@@ -1,5 +1,4 @@
 from abc import abstractmethod
-import random
 import numpy as np
 import pygame
 
@@ -10,7 +9,7 @@ from utils import euclidean_distance
 from collections import namedtuple
 
 
-Point = namedtuple('Point', 'x, y')
+Position = namedtuple('Position', 'x, y')
 
 
 class Snake(core.Env):
@@ -19,7 +18,7 @@ class Snake(core.Env):
     
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 50}
 
-    def __init__(self, num_columns, num_rows, low, high, state_shape):
+    def __init__(self, num_columns, num_rows, low, high, state_shape, seed=None):
         super().__init__()
         self.num_columns = num_columns
         self.num_rows = num_rows
@@ -28,6 +27,7 @@ class Snake(core.Env):
         self.action_space = spaces.Discrete(4)
         self.observation_space = spaces.Box(low = low, high = high, shape = state_shape, dtype = np.float64)
         self.max_distance = euclidean_distance((0, 0), (self.num_columns, self.num_rows))
+        self.seed(seed)
         self.reset()
     
     @property
@@ -35,16 +35,19 @@ class Snake(core.Env):
     def state(self):
         raise NotImplementedError
     
+    def seed(self, seed=None):
+        self.rng = np.random.default_rng(seed) if seed else np.random.default_rng()
+    
     def reset(self):
         self.direction = 1
         self.screen = None
         self.clock = None
         self.isopen = True
-        self.head = Point(self.num_columns // 2, self.num_rows // 2)
+        self.head = Position(self.num_columns // 2, self.num_rows // 2)
         self.body = [
             self.head,
-            Point(self.head.x - 1, self.head.y),
-            Point(self.head.x - 2, self.head.y)
+            Position(self.head.x - 1, self.head.y),
+            Position(self.head.x - 2, self.head.y)
             ]
         self.apple = None
         self._place_apple()
@@ -58,9 +61,9 @@ class Snake(core.Env):
             self.isopen = False
         
     def _place_apple(self):
-        self.apple = Point(random.randint(0, self.num_columns - 1), random.randint(0, self.num_rows - 1))
+        self.apple = Position(self.rng.integers(low = 0, high = self.num_columns), self.rng.integers(low = 0, high = self.num_rows))
         while self.apple in self.body:
-            self.apple = Point(random.randint(0, self.num_columns - 1), random.randint(0, self.num_rows - 1))
+            self.apple = Position(self.rng.integers(low = 0, high = self.num_columns), self.rng.integers(low = 0, high = self.num_rows))
     
     def distance_to_apple(self):
         return euclidean_distance((self.head.x, self.head.y), (self.apple.x, self.apple.y)) / self.max_distance
@@ -138,7 +141,7 @@ class Snake(core.Env):
         elif self.direction == 3:
             y += 1
             
-        self.head = Point(x, y)
+        self.head = Position(x, y)
         self.body.insert(0, self.head)
         
         new_state, crashed = self._crash()

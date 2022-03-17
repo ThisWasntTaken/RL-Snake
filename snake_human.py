@@ -12,7 +12,7 @@ class Direction(Enum):
     UP = 3
     DOWN = 4
     
-Point = namedtuple('Point', 'x, y')
+Position = namedtuple('Position', 'x, y')
 
 class Snake:
 
@@ -30,19 +30,19 @@ class Snake:
     
     def reset(self):
         self.direction = Direction.RIGHT
-        self.head = Point(self.num_columns // 2, self.num_rows // 2)
+        self.head = Position(self.num_columns // 2, self.num_rows // 2)
         self.body = [
             self.head,
-            Point(self.head.x - 1, self.head.y),
-            Point(self.head.x - 2, self.head.y)
+            Position(self.head.x - 1, self.head.y),
+            Position(self.head.x - 2, self.head.y)
             ]
         self.apple = None
         self._place_apple()
         
     def _place_apple(self):
-        self.apple = Point(random.randint(0, self.num_columns - 1), random.randint(0, self.num_rows - 1))
+        self.apple = Position(random.randint(0, self.num_columns - 1), random.randint(0, self.num_rows - 1))
         while self.apple in self.body:
-            self.apple = Point(random.randint(0, self.num_columns - 1), random.randint(0, self.num_rows - 1))
+            self.apple = Position(random.randint(0, self.num_columns - 1), random.randint(0, self.num_rows - 1))
         
     def step(self):
         action = self.direction
@@ -79,7 +79,7 @@ class Snake:
         elif self.direction == Direction.UP:
             y -= 1
             
-        self.head = Point(x, y)
+        self.head = Position(x, y)
         self.body.insert(0, self.head)
         
         crashed = self._crash()

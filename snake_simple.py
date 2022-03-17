@@ -1,13 +1,11 @@
-import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import pandas as pd
 
 from torch.nn import Linear, Module
-from gym import spaces
 
 from agents import Q_Agent, Vanilla_DQN_Agent, Double_DQN_Agent, Double_DQN_Priority_Agent
-from utils import euclidean_distance, exponential_decay_schedule, linear_annealing_schedule, exponential_annealing_schedule
+from utils import exponential_decay_schedule, linear_annealing_schedule, exponential_annealing_schedule
 from snake import Snake
 
 
@@ -30,15 +28,15 @@ class SnakeModel(Module):
 
 class SnakeSimple(Snake):
 
-    def __init__(self, num_columns, num_rows):
-        self.num_columns = num_columns
-        self.num_rows = num_rows
-        self.screen_width = self.num_columns * self.RENDER_BLOCK_SIZE
-        self.screen_height = self.num_rows * self.RENDER_BLOCK_SIZE
-        self.action_space = spaces.Discrete(4)
-        self.observation_space = spaces.Box(low = 0, high = 1, shape = (12,), dtype = np.uint8)
-        self.max_distance = euclidean_distance((0, 0), (self.num_columns, self.num_rows))
-        self.reset()
+    def __init__(self, num_columns, num_rows, low=0, high=1, state_shape=(12,), seed=None):
+        super().__init__(
+            num_columns = num_columns,
+            num_rows = num_rows,
+            low = low,
+            high = high,
+            state_shape = state_shape,
+            seed = seed
+            )
     
     @property
     def state(self):
@@ -71,19 +69,19 @@ if __name__ == "__main__":
         num_columns = 20,
         num_rows = 20
         )
-    # agent = Q_Agent(
-    #     environment=env,
-    #     learning_rate=0.1,
-    #     discount_factor=0.999,
-    #     epsilon_schedule = lambda n: exponential_decay_schedule(
-    #         n = n,
-    #         decay = 0.999,
-    #         min_val = 1e-3
-    #         )
-    #     )
+    agent = Q_Agent(
+        environment=env,
+        learning_rate=0.1,
+        discount_factor=0.999,
+        epsilon_schedule = lambda n: exponential_decay_schedule(
+            n = n,
+            decay = 0.999,
+            min_val = 1e-3
+            )
+        )
     # rewards = agent.train(
     #     num_episodes = 20000,
-    #     save_as = 'snake',
+    #     save_as = 'snake_q_table',
     # )
     # plt.plot(pd.Series(rewards).rolling(window=100).mean(), label = "Q Learning")
     # plt.xlabel("Episodes")
@@ -92,26 +90,26 @@ if __name__ == "__main__":
     # plt.title("Rolling average of 100 episode rewards")
     # plt.tight_layout()
     # plt.savefig("results/snake_rolling.png")
-    # agent.play(
-    #     filepath = 'snake_1.pkl',
-    #     num_episodes = 1
-    # )
-    agent = Vanilla_DQN_Agent(
-        environment = env,
-        model_class = SnakeModel,
-        learning_rate = 0.001,
-        discount_factor = 0.999,
-        epsilon_schedule = lambda n: exponential_decay_schedule(
-            n = n,
-            decay = 0.999,
-            min_val = 0.01
-            ),
-        replay_buffer_size = 10000,
-        minimum_buffer_size = 1000,
-        batch_size = 32,
-        update_frequency = 4,
-        device = torch.device('cpu')
+    agent.play(
+        filepath = 'models/snake_q_table.pkl',
+        num_episodes = 1
     )
+    # agent = Vanilla_DQN_Agent(
+    #     environment = env,
+    #     model_class = SnakeModel,
+    #     learning_rate = 0.001,
+    #     discount_factor = 0.999,
+    #     epsilon_schedule = lambda n: exponential_decay_schedule(
+    #         n = n,
+    #         decay = 0.999,
+    #         min_val = 0.01
+    #         ),
+    #     replay_buffer_size = 10000,
+    #     minimum_buffer_size = 1000,
+    #     batch_size = 32,
+    #     update_frequency = 4,
+    #     device = torch.device('cpu')
+    # )
     # rewards = agent.train(
     #     num_episodes = 20000,
     #     save_as = 'snake',
@@ -123,11 +121,11 @@ if __name__ == "__main__":
     # plt.title("Rolling average of 100 episode rewards")
     # plt.tight_layout()
     # plt.savefig("results/snake_rolling.png")
-    agent.play(
-        model_class = SnakeModel,
-        filepath = 'models/snake/20000.pth',
-        num_episodes = 1
-    )
+    # agent.play(
+    #     model_class = SnakeModel,
+    #     filepath = 'models/snake/20000.pth',
+    #     num_episodes = 1
+    # )
     # agent = Double_DQN_Priority_Agent(
     #     environment = env,
     #     model_class = SnakeModel,
@@ -162,6 +160,6 @@ if __name__ == "__main__":
     # plt.savefig("results/snake_rolling.png")
     # agent.play(
     #     model_class = SnakeModel,
-    #     filepath = 'models/snake/20000.pth',
+    #     filepath = 'models/7600.pth',
     #     num_episodes = 1
     # )

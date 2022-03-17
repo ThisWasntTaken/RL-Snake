@@ -7,7 +7,7 @@ from torch.nn import Conv2d, MaxPool2d, Linear, Module
 from gym.wrappers import FrameStack
 
 from agents import Double_DQN_Priority_Agent, Vanilla_DQN_Agent, Double_DQN_Agent
-from utils import play, exponential_decay_schedule, linear_annealing_schedule, exponential_annealing_schedule, euclidean_distance
+from utils import exponential_decay_schedule, linear_annealing_schedule, exponential_annealing_schedule
 from snake import Snake
 
 

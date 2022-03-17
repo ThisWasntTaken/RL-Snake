@@ -1,10 +1,7 @@
-import random
 import torch
 import tqdm
 import numpy as np
 import pickle
-
-from numpy.random import default_rng
 
 from utils import ExperienceReplayBuffer, PrioritizedExperienceReplayBuffer, plot
 
@@ -13,33 +10,40 @@ SHOW_EVERY = 0
 
 
 class Q_Agent:
-    def __init__(self, environment, learning_rate, discount_factor=0.999, epsilon_schedule=lambda: 0.9):
+    def __init__(self, environment, learning_rate, discount_factor=0.999, epsilon_schedule=lambda: 0.9, seed=None):
         self.env = environment
         self.q_table = dict()
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
         self.epsilon_schedule = epsilon_schedule
+        self.seed(seed)
     
-    def get_action(self, state):
-        gen = random.uniform(0, 1)
-        if gen < self.epsilon:
+    def seed(self, seed=None):
+        self.rng = np.random.default_rng(seed) if seed else np.random.default_rng()
+    
+    def get_action(self, state, epsilon):
+        if state not in self.q_table:
+            self.q_table[state] = np.zeros((self.env.action_space.n,), dtype=np.float32)
+        
+        gen = self.rng.uniform(0, 1)
+        if gen < epsilon:
             return self.env.action_space.sample()
         
-        m = float('-inf')
-        ret = -1
-        for action in range(self.env.action_space.n):
-            if self.q_table.get((state, action), 0.0) > m:
-                m = self.q_table.get((state, action), 0.0)
-                ret = action
-        
-        return ret
+        return np.argmax(self.q_table[state])
     
     def get_max_q_value(self, state):
-        ret = float('-inf')
-        for action in range(self.env.action_space.n):
-            ret = max(ret, self.q_table.get((state, action), 0.0))
+        if state in self.q_table:
+            return np.max(self.q_table[state])
         
-        return ret
+        # self.q_table[state] = np.zeros((self.env.action_space.n,), dtype=np.float32)
+        return 0.0
+    
+    def get_q_value(self, state, action):
+        if state in self.q_table:
+            return self.q_table[state][action]
+        
+        # self.q_table[state] = np.zeros((self.env.action_space.n,), dtype=np.float32)
+        return 0.0
     
     def train(self, num_episodes, save_as):
         rewards_list = []
@@ -48,14 +52,16 @@ class Q_Agent:
             state = self.env.reset()
             done = False
             episode_reward = 0
-            self.epsilon = self.epsilon_schedule(e)
+            epsilon = self.epsilon_schedule(e)
             while not done:
-                action = self.get_action(state)
+                action = self.get_action(state, epsilon)
                 if SHOW_EVERY and e % SHOW_EVERY == 0:
                     self.env.render()
                 new_state, reward, done, _ = self.env.step(action)
                 episode_reward += reward
-                self.q_table[(state, action)] = (1 - self.learning_rate) * self.q_table.get((state, action), 0.0) + self.learning_rate * (reward + self.discount_factor * self.get_max_q_value(new_state))
+                q_value = self.get_q_value(state, action)
+                max_q_value = self.get_max_q_value(new_state)
+                self.q_table[state][action] = (1 - self.learning_rate) * q_value + self.learning_rate * (reward + self.discount_factor * max_q_value)
                 state = new_state
             
             rewards_list.append(episode_reward)
@@ -68,6 +74,7 @@ class Q_Agent:
             rewards = rewards_list,
             filepath = save_as
             )
+
         self.env.close()
         return rewards_list
 
@@ -75,7 +82,7 @@ class Q_Agent:
         with open(filepath, 'rb') as inp:
             checkpoint = pickle.load(inp)
         
-        q_table = checkpoint['q_table']
+        q_table = checkpoint["q_table"]
         for _ in range(num_episodes):
             t = 0
             done = False
@@ -83,18 +90,13 @@ class Q_Agent:
             while not done:
                 self.env.render()
                 t += 1
-                m = float('-inf')
-                action = -1
-                for a in range(self.env.action_space.n):
-                    if q_table.get((state, a), 0.0) > m:
-                        m = q_table.get((state, a), 0.0)
-                        action = a
+                action = np.argmax(q_table.get(state, 0))
                 state, _, done, _ = self.env.step(action)
             print("Done at step {}".format(t))
         self.env.close()
         
     def save(self, checkpoint, filepath):
-        with open(filepath + ".pkl", 'wb') as outp:
+        with open("models/" + filepath + ".pkl", 'wb') as outp:
             pickle.dump(checkpoint, outp, pickle.HIGHEST_PROTOCOL)
 
 
@@ -120,17 +122,18 @@ class Vanilla_DQN_Agent:
         self.memory = ExperienceReplayBuffer(replay_buffer_size, self.state_shape, batch_size, self.rng)
     
     def seed(self, seed=None):
-        self.rng = default_rng(seed) if seed else default_rng()
+        self.rng = np.random.default_rng(seed) if seed else np.random.default_rng()
     
-    def get_action(self, state):
-        gen = random.uniform(0, 1)
-        if gen < self.epsilon:
+    def get_action(self, state, epsilon):
+        gen = self.rng.uniform(0, 1)
+        if gen < epsilon:
             return self.env.action_space.sample()
 
         inp = torch.from_numpy(np.expand_dims(state, axis=0))
         inp = inp.to(self.device).float()
         with torch.no_grad():
             q_values = self.online_model(inp)
+        
         return torch.argmax(q_values).item()
     
     def get_online_q_value(self, states, actions):
@@ -142,6 +145,7 @@ class Vanilla_DQN_Agent:
         inp = states.to(self.device).float()
         with torch.no_grad():
             q_values = self.target_model(inp)
+            
         return torch.max(q_values, axis = 1).values
 
     def update_target_model(self):
@@ -155,10 +159,10 @@ class Vanilla_DQN_Agent:
             state = self.env.reset()
             done = False
             episode_reward = 0
-            self.epsilon = self.epsilon_schedule(e)
+            epsilon = self.epsilon_schedule(e)
             while not done:
                 steps += 1
-                action = self.get_action(state)
+                action = self.get_action(state, epsilon)
                 if SHOW_EVERY and e % SHOW_EVERY == 0:
                     self.env.render()
                 new_state, reward, done, _ = self.env.step(action)
@@ -199,11 +203,13 @@ class Vanilla_DQN_Agent:
                         }
                     }
                 self.save(checkpoint = checkpoint, filepath = save_as + "/" + str(e))
+
                 plot(
                     num_episodes = e,
                     rewards = rewards_list,
                     filepath = save_as
                     )
+
         self.env.close()
         return rewards_list
 
@@ -235,6 +241,7 @@ class Double_DQN_Agent(Vanilla_DQN_Agent):
         inp = states.to(self.device).float()
         with torch.no_grad():
             q_values = self.online_model(inp)
+            
         return torch.argmax(q_values, axis = 1)
     
     def get_target_q_value(self, states):
@@ -242,6 +249,7 @@ class Double_DQN_Agent(Vanilla_DQN_Agent):
         actions = self.get_best_actions(inp)
         with torch.no_grad():
             q_values = self.target_model.forward(inp)
+
         return q_values[range(len(states)), actions]
 
 
@@ -275,10 +283,11 @@ class Double_DQN_Priority_Agent(Double_DQN_Agent):
             state = self.env.reset()
             done = False
             episode_reward = 0
-            self.epsilon = self.epsilon_schedule(e)
+            epsilon = self.epsilon_schedule(e)
+            beta = self.beta_schedule(e)
             while not done:
                 steps += 1
-                action = self.get_action(state)
+                action = self.get_action(state, epsilon)
                 if SHOW_EVERY and e % SHOW_EVERY == 0:
                     self.env.render()
                 new_state, reward, done, _ = self.env.step(action)
@@ -287,7 +296,7 @@ class Double_DQN_Priority_Agent(Double_DQN_Agent):
                 state = new_state
 
                 if len(self.memory) >= self.minimum_buffer_size and steps % self.update_frequency == 0:
-                    states, actions, rewards, new_states, mask, indices, weights = self.memory.sample(beta = self.beta_schedule(e))
+                    states, actions, rewards, new_states, mask, indices, weights = self.memory.sample(beta = beta)
                     rewards = rewards.to(self.device)
                     mask = mask.to(self.device)
                     weights = weights.to(self.device)
@@ -324,10 +333,12 @@ class Double_DQN_Priority_Agent(Double_DQN_Agent):
                         }
                     }
                 self.save(checkpoint = checkpoint, filepath = save_as + "/" + str(e))
+
                 plot(
                     num_episodes = e,
                     rewards = rewards_list,
                     filepath = save_as
                     )
+
         self.env.close()
         return rewards_list

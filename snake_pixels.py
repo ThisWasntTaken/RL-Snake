@@ -6,7 +6,7 @@ import pandas as pd
 from torch.nn import Conv2d, MaxPool2d, Linear, Module
 
 from agents import Double_DQN_Priority_Agent, Vanilla_DQN_Agent, Double_DQN_Agent
-from utils import play, exponential_decay_schedule, linear_annealing_schedule, exponential_annealing_schedule, euclidean_distance
+from utils import exponential_decay_schedule, linear_annealing_schedule, exponential_annealing_schedule
 from snake import Snake
 
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
         high = 1,
         state_shape = (3, 50, 50)
         )
-    agent = Double_DQN_Priority_Agent(
+    agent = Vanilla_DQN_Agent(
         environment = env,
         model_class = SnakeModel,
         learning_rate = 0.001,
@@ -71,20 +71,15 @@ if __name__ == "__main__":
             decay = 0.999,
             min_val = 1e-3
             ),
-        beta_schedule = lambda n: exponential_annealing_schedule(
-            n = n,
-            rate = 1e-3
-            ),
         replay_buffer_size = 50000,
         minimum_buffer_size = 5000,
         batch_size = 32,
-        alpha=0.7,
         update_frequency = 4,
-        device = torch.device('cpu')
+        device = torch.device('cuda:0')
     )
     rewards = agent.train(
         num_episodes = 20000,
-        save_as = 'snake',
+        save_as = 'snake_pixels_vanilla_dqn',
     )
     plt.plot(pd.Series(rewards).rolling(window=100).mean(), label = "Double DQN with Priority")
     plt.xlabel("Episodes")
