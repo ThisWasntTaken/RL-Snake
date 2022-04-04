@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+import pandas as pd
 
 from torch.nn import functional as F, Module, init
 from torch.nn.parameter import Parameter
@@ -11,11 +12,22 @@ def exponential_decay_schedule(n, decay, min_val):
     return max(decay ** n, min_val)
 
 
-def linear_annealing_schedule(n, base, rate, max_val):
+def linear_decay_schedule(n, base, rate, min_val):
+    return max(base - n * rate, min_val)
+
+
+def linear_decay_schedule_after_k(n, k, base, rate, min_val):
+    if n <= k:
+        return base
+    
+    return max(base - (n - k) * rate, min_val)
+
+
+def linear_growth_schedule(n, base, rate, max_val):
     return min(max_val, base + n * rate)
 
 
-def exponential_annealing_schedule(n, rate):
+def exponential_growth_schedule(n, rate):
     return 1 - np.exp(-rate * n)
 
 
@@ -23,13 +35,21 @@ def euclidean_distance(x, y):
     return np.linalg.norm(np.array(x) - np.array(y))
 
 
-def plot(num_episodes, rewards, filepath):
-    plt.plot(range(num_episodes), rewards)
-    plt.xlabel("Episodes")
-    plt.ylabel("Episodic Reward")
-    plt.title(filepath)
+def plot(num_episodes, rewards, episode_lengths, filepath):
+    plt.plot(range(num_episodes), rewards, label = "Reward")
+    plt.plot(range(num_episodes), episode_lengths, label = "Length")
+    plt.xlabel("Episode")
+    plt.legend()
     plt.tight_layout()
     plt.savefig("results/" + filepath + ".png")
+    plt.cla()
+    plt.plot(pd.Series(rewards).rolling(window=100).mean(), label = "Reward")
+    plt.plot(pd.Series(episode_lengths).rolling(window=100).mean(), label = "Length")
+    plt.xticks([], [])
+    plt.legend()
+    plt.title("Rolling averages of 100 episodes")
+    plt.tight_layout()
+    plt.savefig("results/" + filepath + "_rolling.png")
     plt.cla()
 
 

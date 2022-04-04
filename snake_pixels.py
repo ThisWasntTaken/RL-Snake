@@ -6,7 +6,7 @@ import pandas as pd
 from torch.nn import Conv2d, MaxPool2d, Linear, Module
 
 from agents import Double_DQN_Priority_Agent, Vanilla_DQN_Agent, Double_DQN_Agent
-from utils import exponential_decay_schedule, linear_annealing_schedule, exponential_annealing_schedule
+from utils import linear_decay_schedule, linear_decay_schedule_after_k, linear_growth_schedule, exponential_growth_schedule
 from snake import Snake
 
 
@@ -41,6 +41,16 @@ class SnakeModel(Module):
 class SnakePixels(Snake):
 
     BLOCK_SIZE = 5
+
+    def __init__(self, num_columns, num_rows, low=0, high=1, seed=None):
+        super().__init__(
+            num_columns = num_columns,
+            num_rows = num_rows,
+            low = low,
+            high = high,
+            state_shape = (3, num_columns * self.BLOCK_SIZE, num_rows * self.BLOCK_SIZE),
+            seed = seed
+            )
     
     @property
     def state(self):
@@ -58,39 +68,44 @@ if __name__ == "__main__":
         num_columns = 10,
         num_rows = 10,
         low = 0,
-        high = 1,
-        state_shape = (3, 50, 50)
+        high = 1
         )
-    agent = Vanilla_DQN_Agent(
+    agent = Double_DQN_Priority_Agent(
         environment = env,
         model_class = SnakeModel,
         learning_rate = 0.001,
         discount_factor = 0.999,
-        epsilon_schedule = lambda n: exponential_decay_schedule(
+        epsilon_schedule = lambda n: linear_decay_schedule_after_k(
             n = n,
-            decay = 0.999,
+            k = 5000,
+            base = 1,
+            rate = 1e-4,
             min_val = 1e-3
+            ),
+        beta_schedule = lambda n: exponential_growth_schedule(
+            n = n,
+            rate = 1e-4
             ),
         replay_buffer_size = 50000,
         minimum_buffer_size = 5000,
         batch_size = 32,
+        alpha=0.7,
         update_frequency = 4,
         device = torch.device('cuda:0')
-    )
+        )
     rewards = agent.train(
         num_episodes = 20000,
-        save_as = 'snake_pixels_vanilla_dqn',
-    )
+        save_as = 'snake_pixels_double_dqn_with_priority_linear_decay',
+        )
     plt.plot(pd.Series(rewards).rolling(window=100).mean(), label = "Double DQN with Priority")
     plt.xlabel("Episodes")
     plt.ylabel("Rewards")
     plt.legend()
     plt.title("Rolling average of 100 episode rewards")
     plt.tight_layout()
-    plt.savefig("results/snake_rolling.png")
-    # play(
-    #     environment = env,
-    #     model_class = SnakeModel,
-    #     filepath = 'models/snake/8000.pth',
-    #     num_episodes = 1
-    # )
+    plt.savefig("results/snake_pixels_double_dqn_with_priority_linear_decay_rolling.png")
+    agent.play(
+        model_class = SnakeModel,
+        filepath = 'models/snake_pixels_double_dqn_with_priority_linear_decay/20000.pth',
+        num_episodes = 1
+        )

@@ -51,7 +51,7 @@ class SnakePixelsFrameStack(Snake):
             state[:, i, j] = (0, 255, 0)
         state[:, self.head.x, self.head.y] = (255, 255, 255)
         state = np.repeat(np.repeat(state, self.BLOCK_SIZE, 2), self.BLOCK_SIZE, 1)
-        return np.average(state, weights=[0.3, 0.59, 0.11], axis=0) / 255.0
+        return np.average(state, weights=[0.2990, 0.5870, 0.1140], axis=0) / 255.0
 
 
 if __name__ == "__main__":

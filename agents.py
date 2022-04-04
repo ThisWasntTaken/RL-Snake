@@ -47,13 +47,16 @@ class Q_Agent:
     
     def train(self, num_episodes, save_as):
         rewards_list = []
+        episode_lengths = []
 
         for e in tqdm.tqdm(range(1, num_episodes + 1)):
             state = self.env.reset()
+            steps = 0
             done = False
             episode_reward = 0
             epsilon = self.epsilon_schedule(e)
             while not done:
+                steps += 1
                 action = self.get_action(state, epsilon)
                 if SHOW_EVERY and e % SHOW_EVERY == 0:
                     self.env.render()
@@ -65,6 +68,7 @@ class Q_Agent:
                 state = new_state
             
             rewards_list.append(episode_reward)
+            episode_lengths.append(steps)
         
         checkpoint = {"q_table": self.q_table}
         self.save(checkpoint = checkpoint, filepath = save_as)
@@ -72,11 +76,12 @@ class Q_Agent:
         plot(
             num_episodes = e,
             rewards = rewards_list,
+            episode_lengths = episode_lengths,
             filepath = save_as
             )
 
         self.env.close()
-        return rewards_list
+        return rewards_list, episode_lengths
 
     def play(self, filepath, num_episodes=1):
         with open(filepath, 'rb') as inp:
@@ -153,10 +158,11 @@ class Vanilla_DQN_Agent:
     
     def train(self, num_episodes, save_as):
         rewards_list = []
-        steps = 0
+        episode_lengths = []
 
         for e in tqdm.tqdm(range(1, num_episodes + 1)):
             state = self.env.reset()
+            steps = 0
             done = False
             episode_reward = 0
             epsilon = self.epsilon_schedule(e)
@@ -183,7 +189,7 @@ class Vanilla_DQN_Agent:
                     loss.backward()
 
                     # clip gradients
-                    torch.nn.utils.clip_grad_norm_(self.online_model.parameters(), 1)
+                    torch.nn.utils.clip_grad_value_(self.online_model.parameters(), 1)
 
                     self.optimizer.step()
 
@@ -191,6 +197,7 @@ class Vanilla_DQN_Agent:
                     self.update_target_model()
             
             rewards_list.append(episode_reward)
+            episode_lengths.append(steps)
             if e % 100 == 0:
                 checkpoint = {
                     "model_state": self.online_model.state_dict(),
@@ -207,11 +214,12 @@ class Vanilla_DQN_Agent:
                 plot(
                     num_episodes = e,
                     rewards = rewards_list,
+                    episode_lengths = episode_lengths,
                     filepath = save_as
                     )
 
         self.env.close()
-        return rewards_list
+        return rewards_list, episode_lengths
 
     def play(self, model_class, filepath, num_episodes=1):
         model = model_class()
@@ -277,10 +285,11 @@ class Double_DQN_Priority_Agent(Double_DQN_Agent):
     
     def train(self, num_episodes, save_as):
         rewards_list = []
-        steps = 0
+        episode_lengths = []
 
         for e in tqdm.tqdm(range(1, num_episodes + 1)):
             state = self.env.reset()
+            steps = 0
             done = False
             episode_reward = 0
             epsilon = self.epsilon_schedule(e)
@@ -312,7 +321,7 @@ class Double_DQN_Priority_Agent(Double_DQN_Agent):
                     loss.backward()
 
                     # clip gradients
-                    torch.nn.utils.clip_grad_norm_(self.online_model.parameters(), 1)
+                    torch.nn.utils.clip_grad_value_(self.online_model.parameters(), 1)
 
                     self.optimizer.step()
 
@@ -320,6 +329,7 @@ class Double_DQN_Priority_Agent(Double_DQN_Agent):
                     self.update_target_model()
             
             rewards_list.append(episode_reward)
+            episode_lengths.append(steps)
             if e % 100 == 0:
                 checkpoint = {
                     "model_state": self.online_model.state_dict(),
@@ -337,8 +347,9 @@ class Double_DQN_Priority_Agent(Double_DQN_Agent):
                 plot(
                     num_episodes = e,
                     rewards = rewards_list,
+                    episode_lengths = episode_lengths,
                     filepath = save_as
                     )
 
         self.env.close()
-        return rewards_list
+        return rewards_list, episode_lengths

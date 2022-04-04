@@ -6,17 +6,13 @@ from enum import Enum
 from collections import namedtuple
 
 
-class Direction(Enum):
-    RIGHT = 1
-    LEFT = 2
-    UP = 3
-    DOWN = 4
-    
 Position = namedtuple('Position', 'x, y')
+
 
 class Snake:
 
     RENDER_BLOCK_SIZE = 20
+    RENDER_OUTLINE = 1
 
     def __init__(self, num_columns, num_rows):
         super().__init__()
@@ -29,7 +25,7 @@ class Snake:
         self.reset()
     
     def reset(self):
-        self.direction = Direction.RIGHT
+        self.direction = 1
         self.head = Position(self.num_columns // 2, self.num_rows // 2)
         self.body = [
             self.head,
@@ -52,31 +48,31 @@ class Snake:
                 quit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    action = Direction.LEFT
+                    action = 0
                 elif event.key == pygame.K_RIGHT:
-                    action = Direction.RIGHT
+                    action = 1
                 elif event.key == pygame.K_UP:
-                    action = Direction.UP
+                    action = 2
                 elif event.key == pygame.K_DOWN:
-                    action = Direction.DOWN
+                    action = 3
                     
-        if action == Direction.LEFT and self.direction == Direction.RIGHT or\
-         action == Direction.RIGHT and self.direction == Direction.LEFT or\
-         action == Direction.UP and self.direction == Direction.DOWN or\
-         action == Direction.DOWN and self.direction == Direction.UP:
+        if action == 0 and self.direction == 1 or\
+         action == 1 and self.direction == 0 or\
+         action == 2 and self.direction == 3 or\
+         action == 3 and self.direction == 2:
             action = self.direction
         
         self.direction = action
         
         x = self.head.x
         y = self.head.y
-        if self.direction == Direction.RIGHT:
+        if action == 1:
             x += 1
-        elif self.direction == Direction.LEFT:
+        elif action == 0:
             x -= 1
-        elif self.direction == Direction.DOWN:
+        elif action == 3:
             y += 1
-        elif self.direction == Direction.UP:
+        elif action == 2:
             y -= 1
             
         self.head = Position(x, y)
@@ -104,18 +100,18 @@ class Snake:
         self.surf = pygame.Surface((self.screen_width, self.screen_height))
         self.surf.fill((0, 0, 0))
             
-        l, r, t, b = self.apple.x * self.RENDER_BLOCK_SIZE, (self.apple.x + 1) * self.RENDER_BLOCK_SIZE, self.apple.y * self.RENDER_BLOCK_SIZE, (self.apple.y + 1) * self.RENDER_BLOCK_SIZE
+        l, r, t, b = self.apple.x * self.RENDER_BLOCK_SIZE + self.RENDER_OUTLINE, (self.apple.x + 1) * self.RENDER_BLOCK_SIZE - self.RENDER_OUTLINE, self.apple.y * self.RENDER_BLOCK_SIZE + self.RENDER_OUTLINE, (self.apple.y + 1) * self.RENDER_BLOCK_SIZE - self.RENDER_OUTLINE
         coords = [(l, b), (l, t), (r, t), (r, b)]
         gfxdraw.aapolygon(self.surf, coords, (255, 0, 0))
         gfxdraw.filled_polygon(self.surf, coords, (255, 0, 0))
         
         for i, j in self.body:
-            l, r, t, b = i * self.RENDER_BLOCK_SIZE, (i + 1) * self.RENDER_BLOCK_SIZE, j * self.RENDER_BLOCK_SIZE, (j + 1) * self.RENDER_BLOCK_SIZE
+            l, r, t, b = i * self.RENDER_BLOCK_SIZE + self.RENDER_OUTLINE, (i + 1) * self.RENDER_BLOCK_SIZE - self.RENDER_OUTLINE, j * self.RENDER_BLOCK_SIZE + self.RENDER_OUTLINE, (j + 1) * self.RENDER_BLOCK_SIZE - self.RENDER_OUTLINE
             coords = [(l, b), (l, t), (r, t), (r, b)]
             gfxdraw.aapolygon(self.surf, coords, (0, 255, 0))
             gfxdraw.filled_polygon(self.surf, coords, (0, 255, 0))
             
-        l, r, t, b = self.head.x * self.RENDER_BLOCK_SIZE, (self.head.x + 1) * self.RENDER_BLOCK_SIZE, self.head.y * self.RENDER_BLOCK_SIZE, (self.head.y + 1) * self.RENDER_BLOCK_SIZE
+        l, r, t, b = self.head.x * self.RENDER_BLOCK_SIZE + self.RENDER_OUTLINE, (self.head.x + 1) * self.RENDER_BLOCK_SIZE - self.RENDER_OUTLINE, self.head.y * self.RENDER_BLOCK_SIZE + self.RENDER_OUTLINE, (self.head.y + 1) * self.RENDER_BLOCK_SIZE - self.RENDER_OUTLINE
         coords = [(l, b), (l, t), (r, t), (r, b)]
         gfxdraw.aapolygon(self.surf, coords, (255, 255, 255))
         gfxdraw.filled_polygon(self.surf, coords, (255, 255, 255))
@@ -123,7 +119,7 @@ class Snake:
         # self.surf = pygame.transform.flip(self.surf, False, True)
         self.screen.blit(self.surf, (0, 0))
         pygame.display.flip()
-        self.clock.tick(20)
+        self.clock.tick(10)
     
     def _crash(self):
         if self.head.x > self.num_columns - 1 or self.head.x < 0 or\

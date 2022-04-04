@@ -15,6 +15,7 @@ Position = namedtuple('Position', 'x, y')
 class Snake(core.Env):
 
     RENDER_BLOCK_SIZE = 20
+    RENDER_OUTLINE = 1
     
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 50}
 
@@ -27,7 +28,7 @@ class Snake(core.Env):
         self.action_space = spaces.Discrete(4)
         self.observation_space = spaces.Box(low = low, high = high, shape = state_shape, dtype = np.float64)
         self.max_distance = euclidean_distance((0, 0), (self.num_columns, self.num_rows))
-        self.seed(seed)
+        self._seed(seed)
         self.reset()
     
     @property
@@ -35,10 +36,10 @@ class Snake(core.Env):
     def state(self):
         raise NotImplementedError
     
-    def seed(self, seed=None):
+    def _seed(self, seed=None):
         self.rng = np.random.default_rng(seed) if seed else np.random.default_rng()
     
-    def reset(self):
+    def reset(self, seed=None):
         self.direction = 1
         self.screen = None
         self.clock = None
@@ -51,7 +52,8 @@ class Snake(core.Env):
             ]
         self.apple = None
         self._place_apple()
-        self.distance = self.distance_to_apple()
+        self.distance = self._get_distance_to_apple()
+        self._seed(seed)
         return self.state
 
     def close(self):
@@ -65,7 +67,7 @@ class Snake(core.Env):
         while self.apple in self.body:
             self.apple = Position(self.rng.integers(low = 0, high = self.num_columns), self.rng.integers(low = 0, high = self.num_rows))
     
-    def distance_to_apple(self):
+    def _get_distance_to_apple(self):
         return euclidean_distance((self.head.x, self.head.y), (self.apple.x, self.apple.y)) / self.max_distance
     
     @property
@@ -83,18 +85,18 @@ class Snake(core.Env):
         self.surf = pygame.Surface((self.screen_width, self.screen_height))
         self.surf.fill((0, 0, 0))
             
-        l, r, t, b = self.apple.x * self.RENDER_BLOCK_SIZE, (self.apple.x + 1) * self.RENDER_BLOCK_SIZE, self.apple.y * self.RENDER_BLOCK_SIZE, (self.apple.y + 1) * self.RENDER_BLOCK_SIZE
+        l, r, t, b = self.apple.x * self.RENDER_BLOCK_SIZE + self.RENDER_OUTLINE, (self.apple.x + 1) * self.RENDER_BLOCK_SIZE - self.RENDER_OUTLINE, self.apple.y * self.RENDER_BLOCK_SIZE + self.RENDER_OUTLINE, (self.apple.y + 1) * self.RENDER_BLOCK_SIZE - self.RENDER_OUTLINE
         coords = [(l, b), (l, t), (r, t), (r, b)]
         gfxdraw.aapolygon(self.surf, coords, (255, 0, 0))
         gfxdraw.filled_polygon(self.surf, coords, (255, 0, 0))
         
         for i, j in self.body:
-            l, r, t, b = i * self.RENDER_BLOCK_SIZE, (i + 1) * self.RENDER_BLOCK_SIZE, j * self.RENDER_BLOCK_SIZE, (j + 1) * self.RENDER_BLOCK_SIZE
+            l, r, t, b = i * self.RENDER_BLOCK_SIZE + self.RENDER_OUTLINE, (i + 1) * self.RENDER_BLOCK_SIZE - self.RENDER_OUTLINE, j * self.RENDER_BLOCK_SIZE + self.RENDER_OUTLINE, (j + 1) * self.RENDER_BLOCK_SIZE - self.RENDER_OUTLINE
             coords = [(l, b), (l, t), (r, t), (r, b)]
             gfxdraw.aapolygon(self.surf, coords, (0, 255, 0))
             gfxdraw.filled_polygon(self.surf, coords, (0, 255, 0))
             
-        l, r, t, b = self.head.x * self.RENDER_BLOCK_SIZE, (self.head.x + 1) * self.RENDER_BLOCK_SIZE, self.head.y * self.RENDER_BLOCK_SIZE, (self.head.y + 1) * self.RENDER_BLOCK_SIZE
+        l, r, t, b = self.head.x * self.RENDER_BLOCK_SIZE + self.RENDER_OUTLINE, (self.head.x + 1) * self.RENDER_BLOCK_SIZE - self.RENDER_OUTLINE, self.head.y * self.RENDER_BLOCK_SIZE + self.RENDER_OUTLINE, (self.head.y + 1) * self.RENDER_BLOCK_SIZE - self.RENDER_OUTLINE
         coords = [(l, b), (l, t), (r, t), (r, b)]
         gfxdraw.aapolygon(self.surf, coords, (255, 255, 255))
         gfxdraw.filled_polygon(self.surf, coords, (255, 255, 255))
@@ -132,13 +134,13 @@ class Snake(core.Env):
         
         x = self.head.x
         y = self.head.y
-        if self.direction == 0:
+        if action == 0:
             x -= 1
-        elif self.direction == 1:
+        elif action == 1:
             x += 1
-        elif self.direction == 2:
+        elif action == 2:
             y -= 1
-        elif self.direction == 3:
+        elif action == 3:
             y += 1
             
         self.head = Position(x, y)
@@ -146,15 +148,15 @@ class Snake(core.Env):
         
         new_state, crashed = self._crash()
         if crashed:
-            return new_state, -10, True, {}
+            return new_state, -100, True, {}
         
         reward = 0
         if self.head == self.apple:
-            reward = 10
+            reward = 100
             self._place_apple()
         else:
             self.body.pop()
-            new_distance = self.distance_to_apple()
+            new_distance = self._get_distance_to_apple()
             reward = self.distance - new_distance
             self.distance = new_distance
 
