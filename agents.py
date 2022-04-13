@@ -6,7 +6,7 @@ import pickle
 from utils import ExperienceReplayBuffer, PrioritizedExperienceReplayBuffer, plot
 
 
-SHOW_EVERY = 0
+SHOW_EVERY = 500
 
 
 class Q_Agent:
@@ -109,7 +109,7 @@ class Vanilla_DQN_Agent:
     def __init__(
         self, environment, model_class, learning_rate, epsilon_schedule,
         discount_factor=0.9, replay_buffer_size=50000, minimum_buffer_size=5000,
-        batch_size=128, update_frequency=10, device = torch.device('cpu'), seed=None
+        batch_size=128, weight_decay=0, update_frequency=10, device = torch.device('cpu'), seed=None
         ):
         self.env = environment
         self.state_shape = self.env.observation_space.shape
@@ -118,7 +118,7 @@ class Vanilla_DQN_Agent:
         self.epsilon_schedule = epsilon_schedule
         self.device = device
         self.online_model = model_class().to(self.device)
-        self.optimizer = torch.optim.Adam(self.online_model.parameters(), lr = learning_rate)
+        self.optimizer = torch.optim.Adam(self.online_model.parameters(), lr = learning_rate, weight_decay = weight_decay)
         self.target_model = model_class().to(self.device)
         self.target_model.load_state_dict(self.online_model.state_dict())
         self.target_model.eval()
@@ -265,7 +265,7 @@ class Double_DQN_Priority_Agent(Double_DQN_Agent):
     def __init__(
         self, environment, model_class, learning_rate, epsilon_schedule, beta_schedule,
         discount_factor=0.9, replay_buffer_size=50000, minimum_buffer_size=5000,
-        batch_size=128, alpha=0.0, update_frequency=10, device = torch.device('cpu'), seed=None
+        batch_size=128, weight_decay=0, alpha=0.0, update_frequency=10, device = torch.device('cpu'), seed=None
         ):
         self.env = environment
         self.state_shape = self.env.observation_space.shape
@@ -274,7 +274,7 @@ class Double_DQN_Priority_Agent(Double_DQN_Agent):
         self.epsilon_schedule = epsilon_schedule
         self.device = device
         self.online_model = model_class().to(self.device)
-        self.optimizer = torch.optim.Adam(self.online_model.parameters(), lr = learning_rate)
+        self.optimizer = torch.optim.Adam(self.online_model.parameters(), lr = learning_rate, weight_decay = weight_decay)
         self.target_model = model_class().to(self.device)
         self.target_model.load_state_dict(self.online_model.state_dict())
         self.target_model.eval()

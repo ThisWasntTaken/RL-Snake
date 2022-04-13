@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from torch.nn import Conv2d, MaxPool2d, Linear, Module
+from gym.wrappers import FrameStack
 
 from agents import Double_DQN_Priority_Agent, Vanilla_DQN_Agent, Double_DQN_Agent
 from utils import linear_decay_schedule, exponential_decay_schedule, linear_growth_schedule, exponential_growth_schedule
@@ -13,7 +14,7 @@ from snake import Snake
 class SnakeModel(Module):
     def __init__(self):
         super(SnakeModel, self).__init__()
-        self.conv1 = Conv2d(in_channels = 1, out_channels = 16, kernel_size = 5)
+        self.conv1 = Conv2d(in_channels = 4, out_channels = 16, kernel_size = 5)
         # self.maxpool1 = MaxPool2d(2)
         self.conv2 = Conv2d(in_channels = 16, out_channels = 32, kernel_size = 3)
         # self.maxpool2 = MaxPool2d(2)
@@ -43,8 +44,8 @@ class Snake2D(Snake):
         state[self.apple.x][self.apple.y] = -1
         for i, j in self.body:
             state[i][j] = 1
-        state[self.head.x][self.head.y] = 2
-        return np.expand_dims(state, axis=0)
+        # state[self.head.x][self.head.y] = 2
+        return state
 
 
 if __name__ == "__main__":
@@ -52,9 +53,10 @@ if __name__ == "__main__":
         num_columns = 10,
         num_rows = 10,
         low = -1,
-        high = 2,
-        state_shape = (1, 10, 10)
+        high = 1,
+        state_shape = (10, 10)
         )
+    env = FrameStack(env, 4)
     # agent = Vanilla_DQN_Agent(
     #     environment = env,
     #     model_class = SnakeModel,
@@ -107,7 +109,7 @@ if __name__ == "__main__":
             ),
         replay_buffer_size = 50000,
         minimum_buffer_size = 10000,
-        batch_size = 32,
+        batch_size = 16,
         weight_decay = 1e-2,
         alpha=0.7,
         update_frequency = 4,
@@ -115,7 +117,7 @@ if __name__ == "__main__":
         )
     rewards, episode_lengths = agent.train(
         num_episodes = 50000,
-        save_as = 'snake_2d_double_dqn_with_priority_linear_decay',
+        save_as = 'snake_2d_framestack_double_dqn_with_priority_linear_decay',
         )
     plt.plot(pd.Series(rewards).rolling(window=100).mean(), label = "Reward")
     plt.plot(pd.Series(episode_lengths).rolling(window=100).mean(), label = "Length")
@@ -124,9 +126,9 @@ if __name__ == "__main__":
     plt.legend()
     plt.title("Rolling average of 100 episode rewards")
     plt.tight_layout()
-    plt.savefig("results/snake_2d_double_dqn_with_priority_linear_decay_rolling.png")
+    plt.savefig("results/snake_2d_framestack_double_dqn_with_priority_linear_decay_rolling.png")
     agent.play(
         model_class = SnakeModel,
-        filepath = 'models/snake_2d_double_dqn_with_priority_linear_decay/20000.pth',
+        filepath = 'models/snake_2d_framestack_double_dqn_with_priority_linear_decay/20000.pth',
         num_episodes = 1
         )

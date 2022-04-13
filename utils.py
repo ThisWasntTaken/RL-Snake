@@ -45,7 +45,6 @@ def plot(num_episodes, rewards, episode_lengths, filepath):
     plt.cla()
     plt.plot(pd.Series(rewards).rolling(window=100).mean(), label = "Reward")
     plt.plot(pd.Series(episode_lengths).rolling(window=100).mean(), label = "Length")
-    plt.xticks([], [])
     plt.legend()
     plt.title("Rolling averages of 100 episodes")
     plt.tight_layout()

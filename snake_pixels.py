@@ -73,31 +73,34 @@ if __name__ == "__main__":
     agent = Double_DQN_Priority_Agent(
         environment = env,
         model_class = SnakeModel,
-        learning_rate = 0.001,
-        discount_factor = 0.999,
-        epsilon_schedule = lambda n: linear_decay_schedule_after_k(
+        learning_rate = 1e-2,
+        discount_factor = 0.9,
+        epsilon_schedule = lambda n: linear_decay_schedule(
             n = n,
-            k = 5000,
             base = 1,
             rate = 1e-4,
             min_val = 1e-3
             ),
-        beta_schedule = lambda n: exponential_growth_schedule(
+        beta_schedule = lambda n: linear_growth_schedule(
             n = n,
-            rate = 1e-4
+            base = 0.5,
+            max_val = 1,
+            rate = 2e-5
             ),
-        replay_buffer_size = 50000,
-        minimum_buffer_size = 5000,
-        batch_size = 32,
+        replay_buffer_size = 20000,
+        minimum_buffer_size = 2000,
+        batch_size = 128,
+        weight_decay = 1e-2,
         alpha=0.7,
         update_frequency = 4,
         device = torch.device('cuda:0')
         )
-    rewards = agent.train(
+    rewards, episode_lengths = agent.train(
         num_episodes = 20000,
         save_as = 'snake_pixels_double_dqn_with_priority_linear_decay',
         )
-    plt.plot(pd.Series(rewards).rolling(window=100).mean(), label = "Double DQN with Priority")
+    plt.plot(pd.Series(rewards).rolling(window=100).mean(), label = "Reward")
+    plt.plot(pd.Series(episode_lengths).rolling(window=100).mean(), label = "Length")
     plt.xlabel("Episodes")
     plt.ylabel("Rewards")
     plt.legend()
