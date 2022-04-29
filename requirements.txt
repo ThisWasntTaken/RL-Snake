@@ -1,0 +1,35 @@
+certifi==2021.10.8
+cloudpickle @ file:///home/conda/feedstock_root/build_artifacts/cloudpickle_1631273254894/work
+colorama @ file:///home/conda/feedstock_root/build_artifacts/colorama_1602866480661/work
+cycler @ file:///home/conda/feedstock_root/build_artifacts/cycler_1635519461629/work
+fonttools @ file:///D:/bld/fonttools_1646922258786/work
+future @ file:///D:/bld/future_1635819659513/work
+gym @ file:///D:/bld/gym_1644329067916/work
+kiwisolver @ file:///D:/bld/kiwisolver_1635836839743/work
+matplotlib @ file:///D:/bld/matplotlib-suite_1639359275746/work
+mkl-fft==1.3.1
+mkl-random @ file:///C:/ci/mkl_random_1626186184278/work
+mkl-service==2.4.0
+munkres==1.1.4
+numpy @ file:///C:/ci_310/numpy_and_numpy_base_1643798589088/work
+packaging @ file:///home/conda/feedstock_root/build_artifacts/packaging_1637239678211/work
+pandas @ file:///D:/bld/pandas_1644670189358/work
+Pillow==9.0.1
+pygame==2.1.2
+pyglet @ file:///D:/bld/pyglet_1641370732866/work
+pyparsing @ file:///home/conda/feedstock_root/build_artifacts/pyparsing_1642753572664/work
+PyQt5==5.12.3
+PyQt5_sip==4.19.18
+PyQtChart==5.12
+PyQtWebEngine==5.12.1
+python-dateutil @ file:///home/conda/feedstock_root/build_artifacts/python-dateutil_1626286286081/work
+pytz @ file:///home/conda/feedstock_root/build_artifacts/pytz_1633452062248/work
+six @ file:///tmp/build/80754af9/six_1644875935023/work
+torch==1.10.2
+torchaudio==0.10.2
+torchvision==0.11.3
+tornado @ file:///D:/bld/tornado_1635819758615/work
+tqdm @ file:///home/conda/feedstock_root/build_artifacts/tqdm_1646031859244/work
+typing-extensions @ file:///tmp/build/80754af9/typing_extensions_1631814937681/work
+unicodedata2 @ file:///D:/bld/unicodedata2_1640031186081/work
+wincertstore==0.2

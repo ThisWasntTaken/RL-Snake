@@ -1,0 +1,34 @@
+Development was done on the Anaconda platform. The packages needed are listed in requirements.txt. To install, use
+```
+pip install -r requirements.txt
+```
+inside a new virtual environment.
+
+Files:
+------
+1. README is this file.
+2. requirements.txt contains the list of packages that need to be installed.
+3. snake.py contains the environment implementation.
+4. snake_simple.py implements the Simple state space and contains code to train it.
+5. snake_2d.py implements the 2d state space and contains code to train it.
+6. snake_2d_framestack.py implements the 2D Framestack state space and contains code to train it.
+7. snake_pixels.py implements the Pixels state space and contains code to train it.
+8. snake_pixels_framestack.py implements the Pixels Framestack state space and contains code to train it.
+9. agents.py contains the code for the agents---tabular Q learning, vanilla DQN, and double DQN with priority.
+10. utils.py contains helper and utility functions.
+11. test.py is the file to be run, it contains code to run each trained model on an instance of the environment.
+12. report.pdf is the report.
+13. models/ is a folder that contains the trained models.
+
+To Run:
+-------
+```
+python test.py
+```
+This command runs each trained model on an instance of the environment in the order given below:
+Simple state space - Tabular Q learning
+Simple state space - Vanilla DQN
+Simple state space - Double DQN with Priority
+2D - Vanilla DQN
+2D - Double DQN with Priority
+2D Framestack - Double DQN with Priority

@@ -60,7 +60,10 @@ class SnakePixels(Snake):
             state[:, i, j] = (0, 255, 0)
         state[:, self.head.x, self.head.y] = (255, 255, 255)
         state = np.repeat(np.repeat(state, self.BLOCK_SIZE, 2), self.BLOCK_SIZE, 1)
-        return state / 255.0
+        state = state / 255.0
+        plt.imshow(np.transpose(state, (1, 2, 0)))
+        plt.savefig("start.png")
+        return state
 
 
 if __name__ == "__main__":

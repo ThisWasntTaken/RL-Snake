@@ -14,9 +14,9 @@ from snake import Snake
 class SnakeModel(Module):
     def __init__(self):
         super(SnakeModel, self).__init__()
-        self.conv1 = Conv2d(in_channels = 4, out_channels = 16, kernel_size = 8, stride = 4)
-        self.conv2 = Conv2d(in_channels = 16, out_channels = 32, kernel_size = 4, stride = 2)
-        self.fc1 = Linear(32 * 4 * 4, 256)
+        self.conv1 = Conv2d(in_channels = 4, out_channels = 16, kernel_size = 10, stride = 5)
+        self.conv2 = Conv2d(in_channels = 16, out_channels = 32, kernel_size = 5, stride = 2)
+        self.fc1 = Linear(32 * 3 * 3, 256)
         self.fc2 = Linear(256, 4)
         torch.nn.init.kaiming_uniform_(self.conv1.weight)
         torch.nn.init.kaiming_uniform_(self.conv2.weight)
@@ -42,9 +42,12 @@ class SnakePixelsFrameStack(Snake):
         state[:, self.apple.x, self.apple.y] = (255, 0, 0)
         for i, j in self.body:
             state[:, i, j] = (0, 255, 0)
-        state[:, self.head.x, self.head.y] = (255, 255, 255)
+        # state[:, self.head.x, self.head.y] = (255, 255, 255)
         state = np.repeat(np.repeat(state, self.BLOCK_SIZE, 2), self.BLOCK_SIZE, 1)
-        return np.average(state, weights=[0.2990, 0.5870, 0.1140], axis=0) / 255.0
+        state = np.average(state, weights=[0.2990, 0.5870, 0.1140], axis=0) / 255.0
+        # plt.imshow(state)
+        # plt.show()
+        return state
 
 
 if __name__ == "__main__":
@@ -64,24 +67,24 @@ if __name__ == "__main__":
         epsilon_schedule = lambda n: linear_decay_schedule(
             n = n,
             base = 1,
-            rate = 1e-4,
+            rate = 5e-5,
             min_val = 1e-3
             ),
         beta_schedule = lambda n: linear_growth_schedule(
             n = n,
             base = 0.5,
             max_val = 1,
-            rate = 2e-5
+            rate = 1e-5
             ),
-        replay_buffer_size = 20000,
-        minimum_buffer_size = 2000,
+        replay_buffer_size = 50000,
+        minimum_buffer_size = 10000,
         batch_size = 32,
         alpha=0.7,
         update_frequency = 4,
         device = torch.device('cuda:0')
     )
     rewards, episode_lengths = agent.train(
-        num_episodes = 20000,
+        num_episodes = 50000,
         save_as = 'snake_pixels_framestack_double_dqn_with_priority_linear_decay',
     )
     plt.plot(pd.Series(rewards).rolling(window=100).mean(), label = "Reward")

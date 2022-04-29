@@ -109,26 +109,26 @@ if __name__ == "__main__":
             ),
         replay_buffer_size = 50000,
         minimum_buffer_size = 10000,
-        batch_size = 16,
+        batch_size = 32,
         weight_decay = 1e-2,
         alpha=0.7,
         update_frequency = 4,
         device = torch.device('cpu')
         )
-    rewards, episode_lengths = agent.train(
-        num_episodes = 50000,
-        save_as = 'snake_2d_framestack_double_dqn_with_priority_linear_decay',
-        )
-    plt.plot(pd.Series(rewards).rolling(window=100).mean(), label = "Reward")
-    plt.plot(pd.Series(episode_lengths).rolling(window=100).mean(), label = "Length")
-    plt.xlabel("Episodes")
-    plt.ylabel("Rewards")
-    plt.legend()
-    plt.title("Rolling average of 100 episode rewards")
-    plt.tight_layout()
-    plt.savefig("results/snake_2d_framestack_double_dqn_with_priority_linear_decay_rolling.png")
+    # rewards, episode_lengths = agent.train(
+    #     num_episodes = 50000,
+    #     save_as = 'snake_2d_framestack_double_dqn_with_priority_linear_decay',
+    #     )
+    # plt.plot(pd.Series(rewards).rolling(window=100).mean(), label = "Reward")
+    # plt.plot(pd.Series(episode_lengths).rolling(window=100).mean(), label = "Length")
+    # plt.xlabel("Episodes")
+    # plt.ylabel("Rewards")
+    # plt.legend()
+    # plt.title("Rolling average of 100 episode rewards")
+    # plt.tight_layout()
+    # plt.savefig("results/snake_2d_framestack_double_dqn_with_priority_linear_decay_rolling.png")
     agent.play(
         model_class = SnakeModel,
-        filepath = 'models/snake_2d_framestack_double_dqn_with_priority_linear_decay/20000.pth',
+        filepath = 'final/models/snake_2d_framestack_double_dqn_with_priority_linear_decay.pth',
         num_episodes = 1
         )

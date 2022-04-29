@@ -53,27 +53,28 @@ if __name__ == "__main__":
         num_rows = 10,
         low = -1,
         high = 2,
-        state_shape = (1, 10, 10)
+        state_shape = (1, 10, 10),
+        seed=1242
         )
     # agent = Vanilla_DQN_Agent(
     #     environment = env,
     #     model_class = SnakeModel,
-    #     learning_rate = 0.01,
-    #     discount_factor = 0.999,
+    #     learning_rate = 1e-3,
+    #     discount_factor = 0.9,
     #     epsilon_schedule = lambda n: linear_decay_schedule(
     #         n = n,
     #         base = 1,
-    #         rate = 1e-4,
+    #         rate = 5e-5,
     #         min_val = 1e-3
     #         ),
-    #     replay_buffer_size = 10000,
-    #     minimum_buffer_size = 1000,
+    #     replay_buffer_size = 50000,
+    #     minimum_buffer_size = 10000,
     #     batch_size = 32,
     #     update_frequency = 4,
     #     device = torch.device('cpu')
     #     )
     # rewards, episode_lengths = agent.train(
-    #     num_episodes = 20000,
+    #     num_episodes = 50000,
     #     save_as = 'snake_2d_vanilla_dqn_linear_decay',
     #     )
     # plt.plot(pd.Series(rewards).rolling(window=100).mean(), label = "Reward")
@@ -85,7 +86,7 @@ if __name__ == "__main__":
     # plt.savefig("results/snake_2d_vanilla_dqn_linear_decay_rolling.png")
     # agent.play(
     #     model_class = SnakeModel,
-    #     filepath = 'models/snake_2d_vanilla_dqn_linear_decay/20000.pth',
+    #     filepath = 'final/models/snake_2d_vanilla_dqn_linear_decay.pth',
     #     num_episodes = 1
     #     )
     agent = Double_DQN_Priority_Agent(
@@ -111,22 +112,23 @@ if __name__ == "__main__":
         weight_decay = 1e-2,
         alpha=0.7,
         update_frequency = 4,
-        device = torch.device('cpu')
+        device = torch.device('cpu'),
+        seed=1242
         )
-    rewards, episode_lengths = agent.train(
-        num_episodes = 50000,
-        save_as = 'snake_2d_double_dqn_with_priority_linear_decay',
-        )
-    plt.plot(pd.Series(rewards).rolling(window=100).mean(), label = "Reward")
-    plt.plot(pd.Series(episode_lengths).rolling(window=100).mean(), label = "Length")
-    plt.xlabel("Episodes")
-    plt.ylabel("Rewards")
-    plt.legend()
-    plt.title("Rolling average of 100 episode rewards")
-    plt.tight_layout()
-    plt.savefig("results/snake_2d_double_dqn_with_priority_linear_decay_rolling.png")
+    # rewards, episode_lengths = agent.train(
+    #     num_episodes = 50000,
+    #     save_as = 'snake_2d_double_dqn_with_priority_linear_decay',
+    #     )
+    # plt.plot(pd.Series(rewards).rolling(window=100).mean(), label = "Reward")
+    # plt.plot(pd.Series(episode_lengths).rolling(window=100).mean(), label = "Length")
+    # plt.xlabel("Episodes")
+    # plt.ylabel("Rewards")
+    # plt.legend()
+    # plt.title("Rolling average of 100 episode rewards")
+    # plt.tight_layout()
+    # plt.savefig("results/snake_2d_double_dqn_with_priority_linear_decay_rolling.png")
     agent.play(
         model_class = SnakeModel,
-        filepath = 'models/snake_2d_double_dqn_with_priority_linear_decay/20000.pth',
+        filepath = 'final/models/snake_2d_double_dqn_with_priority_linear_decay.pth',
         num_episodes = 1
         )

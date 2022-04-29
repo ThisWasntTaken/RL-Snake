@@ -6,7 +6,7 @@ import pickle
 from utils import ExperienceReplayBuffer, PrioritizedExperienceReplayBuffer, plot
 
 
-SHOW_EVERY = 500
+SHOW_EVERY = 0
 
 
 class Q_Agent:
